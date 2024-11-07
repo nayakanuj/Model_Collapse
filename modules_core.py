@@ -235,8 +235,8 @@ def num_skills_learnt(s, dt, FLOPS, eps, optimize_flag=True):
   else:
     return s_learnt, eps_BP, x_BP, Pb, Q_val, gamma_BP, alpha
 
-def num_skills_learnt_biterr(s, dt, FLOPS, eps, optimize_flag=True):
-  t = FLOPS/s  
+def num_skills_learnt_biterr(t, dt, FLOPS, eps, optimize_flag=True):
+  s = FLOPS/t  
   sbar = s*(1-eps)/eps
   n = sbar+s # = s/eps
   nv, nc = t, n # these are not number of variable nodes and check nodes. These are n's of binomial distribution
@@ -259,12 +259,13 @@ def num_skills_learnt_biterr(s, dt, FLOPS, eps, optimize_flag=True):
     alpha = get_alpha(nv, nc, pv, pc, x_BP, eps_BP)      
     
     Q_val = 1-norm.cdf(float(np.sqrt(n)*(eps_BP - eps)/alpha), loc=0, scale=1)
+    Pb = Q_val
 
-    gamma_BP = eps_BP*L_func_binomial(1-rho_func_binomial(1-x_BP, pc, nc), pv, nv)
+    gamma_BP = eps_BP*L_func_binomial(1-rho_func_binomial(1-x_BP, pc, nc), pv, nv)    
     Q_val = gamma_BP*Q_val/eps
 
     s_learnt = s*(1-Q_val)
-    #print(f"s={s}, s_learnt={s_learnt}, eps_BP = {eps_BP}, Q={Q}")
+    #print(f"s={s}, s_learnt={s_learnt}, eps_BP = {eps_BP}, Q={Q}")    
 
   if optimize_flag:
     return -s_learnt

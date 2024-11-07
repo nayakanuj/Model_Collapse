@@ -26,7 +26,8 @@ if __name__ == "__main__":
     # dt, eps, eps_str = 4, 0.3, '0pt3'
     # dt, eps, eps_str = 6, 0.7, '0pt7'
     # dt, eps, eps_str = 4, 0.5, '0pt5'
-    dt, eps, eps_str = 6, 0.5, '0pt5'
+    # dt, eps, eps_str = 6, 0.5, '0pt5'
+    dt, eps, eps_str = 6, 0.1, '0pt1'
     # dt, eps, eps_str = 7, 0.5, '0pt5'
     # dt, eps, eps_str = 10, 0.5, '0pt5'
     # dt, eps, eps_str = 14, 0.5, '0pt5'
@@ -37,6 +38,10 @@ if __name__ == "__main__":
     ####### R sweep - range ########
     # min_scale = 0.2 # dt, eps, eps_str = 4, 0.5, '0pt5'
     # max_scale = 0.9
+
+    r_s = np.array([0.01, 0.1, 0.5, 0.99])
+    # dt_s = np.array([1,3,4,6,8,10, 20, 50, 100])
+    dt_s = np.array([1,2,3,4,5,6])
 
     min_scale = 0.2 # dt, eps, eps_str = 6, 0.5, '0pt5'
     max_scale = 0.6
@@ -75,77 +80,34 @@ if __name__ == "__main__":
     max_FLOPS = 1e20
     num_FLOPS = 200
 
-    # ## for Iso-FLOP curves
-    # min_FLOPS = 1e4
-    # max_FLOPS = 1e8
-    # num_FLOPS = 10
-
-    # min_FLOPS = 1e2
-    # max_FLOPS = 1e16
-    # num_FLOPS = 10
-
-    # min_FLOPS = 1e4 # 1e6 is better
-    # max_FLOPS = 1e14
-    # num_FLOPS = 10
-
-    # min_FLOPS = 1e2
-    # max_FLOPS = 1e26
-    # num_FLOPS = 20
-
-    # min_FLOPS = 1e4
-    # max_FLOPS = 1e26
-    # num_FLOPS = 40
-
-    # min_FLOPS = 1e5
-    # max_FLOPS = 1e14
-    # num_FLOPS = 20
-
-    # min_FLOPS = 1e2
-    # max_FLOPS = 1e12
-    # num_FLOPS = 40
-
-    # min_FLOPS = 1e2
-    # max_FLOPS = 1e12
-    # num_FLOPS = 8
-    
-    # min_FLOPS = 1e5
-    # max_FLOPS = 1e6
-    # num_FLOPS = 5
-    # min_scale = 0.4
-    # max_scale = 0.9
-
-    FLOPS_vec = np.logspace(np.log10(min_FLOPS), np.log10(max_FLOPS), num_FLOPS)    
+    # FLOPS_vec = np.logspace(np.log10(min_FLOPS), np.log10(max_FLOPS), num_FLOPS)    
+    FLOPS_vec = np.array([1e4])
 
     s_opt_vec = np.zeros(FLOPS_vec.shape)
     eps_BP_vec = np.zeros(FLOPS_vec.shape)
     x_BP_vec = np.zeros(FLOPS_vec.shape)
     s_learnt_vec = np.zeros(FLOPS_vec.shape)
     alpha_vec = np.zeros(FLOPS_vec.shape)
-
+    
     for ind_FLOPS, FLOPS in enumerate(FLOPS_vec):
-        s_low = max(1.0, np.sqrt(FLOPS)*min_scale)
-        s_high = np.sqrt(FLOPS)*max_scale
 
-        # plot_slearnt_vs_s_biterr(s_low, s_high, FLOPS, eps, dt, alpha)        
+        s_low = max(1.0, np.sqrt(FLOPS)*min_scale)
+        s_high = np.sqrt(FLOPS)*max_scale                
 
         args = (dt, FLOPS, eps)
-        s_opt = my_minimizer(num_skills_learnt_biterr, args, s_low, s_high, num_pts=NUM_PTS)
+        # s_opt = my_minimizer(num_skills_learnt_biterr, args, s_low, s_high, num_pts=NUM_PTS)
+        c = 0.1
+        t_opt = c*np.sqrt(FLOPS)
 
-        s_learnt, eps_BP, x_BP, _, _, _, alpha_val = num_skills_learnt_biterr(s_opt, dt, FLOPS, eps, optimize_flag=False)
-        # print(f"FLOPS={FLOPS}, sqrt(FLOPS)={np.sqrt(FLOPS)}, s_opt={s_opt}, s_learnt={s_learnt}, eps_BP = {eps_BP}, x_BP = {x_BP}")        
-        print(f"{ind_FLOPS}/{num_FLOPS}, FLOPS={FLOPS}, sqrt(FLOPS)={np.sqrt(FLOPS)}, s_opt={s_opt}, s_learnt={s_learnt}, eps_BP = {eps_BP}, alpha = {alpha_val}")
+        for ind_dt, dt in enumerate(dt_s):
 
-        # # # >>>> for debug - begin
-        # t = FLOPS/s_opt
-        # sbar = s_opt*(1-eps)/eps
-        # n = sbar+s_opt
-        # nv, nc = t, n # these are not number of variable nodes and check nodes. These are n's of binomial distribution
-        # ds = dt*t/s_opt
-        # dtbar = ds*n/t  
-        # pv, pc = ds/nv, dtbar/nc
-        # plot_fx_vs_x_dbg(eps_BP, nv, nc, pv, pc, marker="-.")
-        # brkpnt1 = 1
-        # # # >>>> for debug - end
+            s_learnt, eps_BP, x_BP, Pb, _, _, alpha_val = num_skills_learnt_biterr(t_opt, dt, FLOPS, eps, optimize_flag=False)
+
+            # s_learnt_final, eps_BP, x_BP, Pb, _, _, alpha_val = num_skills_learnt_biterr(s_opt, (dt*3)//2, (1-r)*FLOPS, Pb, optimize_flag=False)
+            # s_learnt_orig, eps_BP, x_BP, Pb, _, _, alpha_val = num_skills_learnt_biterr(s_opt, dt, FLOPS, eps, optimize_flag=False)            
+            # s_learnt_synthetic, eps_BP, x_BP, Pb, _, _, alpha_val = num_skills_learnt_biterr(s_opt, (dt*3)//2, FLOPS, eps, optimize_flag=False)
+
+            print(f"test_real = {s_learnt*c/np.sqrt(FLOPS)}, dt = {dt}, alpha = {alpha_val}, eps_BP = {eps_BP}, eps = {eps}")
 
         s_opt_vec[ind_FLOPS] = s_opt
         s_learnt_vec[ind_FLOPS] = s_learnt
@@ -153,13 +115,34 @@ if __name__ == "__main__":
         x_BP_vec[ind_FLOPS] = x_BP
         alpha_vec[ind_FLOPS] = alpha_val
 
-        # plot_slearnt_vs_s(s_low, s_high, FLOPS, eps, dt)
-        # plt.subplot(1,2,1)
-        # plt.plot(s_opt, s_learnt, "ko")
-        # plt.subplot(1,2,2)
-        # plt.plot(s_opt, eps_BP, "ko")
-        # # plot_s_t_vs_flops(FLOPS_vec, s_opt_vec, s_learnt_vec)
-        # plt.show(block=False)
+        brkpnt1 = 1
+
+    
+    for ind_FLOPS, FLOPS in enumerate(FLOPS_vec):
+
+        s_low = max(1.0, np.sqrt(FLOPS)*min_scale)
+        s_high = np.sqrt(FLOPS)*max_scale                
+
+        args = (dt, FLOPS, eps)
+        s_opt = my_minimizer(num_skills_learnt_biterr, args, s_low, s_high, num_pts=NUM_PTS)
+
+        for ind_r, r in enumerate(r_s):
+
+            s_learnt, eps_BP, x_BP, Pb, _, _, alpha_val = num_skills_learnt_biterr(s_opt, dt, r*FLOPS, eps, optimize_flag=False)
+
+            s_learnt_final, eps_BP, x_BP, Pb, _, _, alpha_val = num_skills_learnt_biterr(s_opt, (dt*3)//2, (1-r)*FLOPS, Pb, optimize_flag=False)
+
+            s_learnt_orig, eps_BP, x_BP, Pb, _, _, alpha_val = num_skills_learnt_biterr(s_opt, dt, FLOPS, eps, optimize_flag=False)
+            
+            s_learnt_synthetic, eps_BP, x_BP, Pb, _, _, alpha_val = num_skills_learnt_biterr(s_opt, (dt*3)//2, FLOPS, eps, optimize_flag=False)
+
+            print(f"true data = {r}, synthetic data = {1-r}, test_real = {s_learnt_orig/s_opt}, test_final = {s_learnt_final/s_opt}, test_synthetic = {s_learnt_synthetic/s_opt}")
+
+        s_opt_vec[ind_FLOPS] = s_opt
+        s_learnt_vec[ind_FLOPS] = s_learnt
+        eps_BP_vec[ind_FLOPS] = eps_BP
+        x_BP_vec[ind_FLOPS] = x_BP
+        alpha_vec[ind_FLOPS] = alpha_val
 
         brkpnt1 = 1
         
@@ -171,7 +154,7 @@ if __name__ == "__main__":
         # flops_slearnt_dict[str(FLOPS)] = {'s_opt':s_opt_vec[ind_FLOPS], 's_learnt':s_learnt_vec[ind_FLOPS], 'eps_BP':eps_BP_vec[ind_FLOPS]}    
         flops_slearnt_dict[str(FLOPS)] = {'s_opt':s_opt_vec[ind_FLOPS], 's_learnt':s_learnt_vec[ind_FLOPS], 'eps_BP':eps_BP_vec[ind_FLOPS], 'x_BP':x_BP_vec[ind_FLOPS], 'alpha':alpha_vec[ind_FLOPS]}
     
-    np.save(degree_dist+'_biterr_dt'+str(dt)+'_eps'+eps_str+'_numpts'+str(num_FLOPS)+'.npy', flops_slearnt_dict)
+    # np.save(degree_dist+'_biterr_dt'+str(dt)+'_eps'+eps_str+'_numpts'+str(num_FLOPS)+'.npy', flops_slearnt_dict)
 
     # plot_s_t_vs_flops(FLOPS_vec, s_opt_vec, s_learnt_vec)
 
